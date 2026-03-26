@@ -29,7 +29,6 @@ export class AuthService {
       settings: {
         language: 'en',
         theme: 'light',
-        emailNotifications: true,
       },
     });
 

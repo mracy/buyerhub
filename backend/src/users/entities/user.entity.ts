@@ -33,8 +33,6 @@ export class User {
   settings: {
     language?: string;
     theme?: string;
-    emailNotifications?: boolean;
-    smsNotifications?: boolean;
     timezone?: string;
   };
 

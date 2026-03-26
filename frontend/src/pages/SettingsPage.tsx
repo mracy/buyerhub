@@ -15,6 +15,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { RootState, setTheme, setLanguage } from '../store';
 import Navbar from '../components/Navbar';
+import { usersAPI } from '../services/api';
 
 const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -25,6 +26,8 @@ const SettingsPage: React.FC = () => {
   const [theme, setLocalTheme] = useState<'light' | 'dark'>(storeTheme);
   const [language, setLocalLanguage] = useState(storeLanguage);
   const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -35,13 +38,24 @@ const SettingsPage: React.FC = () => {
     setUser(JSON.parse(userData));
   }, [navigate]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    dispatch(setTheme(theme));
-    dispatch(setLanguage(language));
-    i18n.changeLanguage(language);
-    setSuccess(true);
-    setTimeout(() => setSuccess(false), 3000);
+    setLoading(true);
+    setError(null);
+    setSuccess(false);
+
+    try {
+      await usersAPI.updateSettings({ theme, language });
+      dispatch(setTheme(theme));
+      dispatch(setLanguage(language));
+      i18n.changeLanguage(language);
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to update settings');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -59,6 +73,12 @@ const SettingsPage: React.FC = () => {
           {success && (
             <Alert severity="success" sx={{ mb: 2 }}>
               Settings updated successfully!
+            </Alert>
+          )}
+
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
             </Alert>
           )}
 
@@ -127,12 +147,13 @@ const SettingsPage: React.FC = () => {
                   fullWidth
                   variant="contained"
                   size="large"
+                  disabled={loading}
                   sx={{
                     py: { xs: 1, sm: 1.5 },
                     fontSize: { xs: '0.875rem', sm: '1rem' }
                   }}
                 >
-                  Save Settings
+                  {loading ? 'Saving...' : 'Save Settings'}
                 </Button>
               </Grid>
             </Grid>
